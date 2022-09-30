@@ -1,3 +1,4 @@
+from pydoc import classname
 import joblib
 import requests
 import time
@@ -5,6 +6,8 @@ import re
 import json
 import streamlit as st
 from streamlit_lottie import st_lottie
+import streamlit.components.v1 as components
+from sklearn.pipeline import make_pipeline
 import nltk
 from nltk import word_tokenize
 from nltk.corpus import stopwords
@@ -14,10 +17,13 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 nltk.download('vader_lexicon')
 import pandas as pd
+from lime.lime_text import LimeTextExplainer
 
 stop_words = stopwords.words('english')
 new_stopwords = ['class', 'take', 'teacher', 'professor', 'students', 'student', 'like', 'test', 'tests']
 stop_words.extend(new_stopwords)
+
+class_names = ['Not recommended', 'Recommended']
 
 w_tokenizer = nltk.tokenize.WhitespaceTokenizer()
 lemmatizer = nltk.stem.WordNetLemmatizer()
@@ -29,47 +35,29 @@ def lemmatize(text):
     return result
 
 def predict(comment):
-  comment = re.sub(r'[^a-zA-Z\s]', '', comment).lower().split()
-  comment = [' '.join([word for word in comment if word not in (stop_words)])]
-  comment = list(map(lemmatize, comment))
-  comment = loaded_tfidfv.transform(comment)
-  result = loaded_model.predict(comment)
-  predict_proba = loaded_model.predict_proba(comment)
+    comment = re.sub(r'[^a-zA-Z\s]', '', comment).lower().split()
+    comment = [' '.join([word for word in comment if word not in (stop_words)])]
+    comment = list(map(lemmatize, comment))
+    comment = loaded_tfidfv.transform(comment)
+    result = loaded_model.predict(comment)
+    predict_proba = loaded_model.predict_proba(comment)
 
-  if predict_proba[0][0] > predict_proba[0][1]:
-    return f'According to this comment, we do not recommend you to take this course with {round(predict_proba[0][0]*100)}% chance.'
-  elif predict_proba[0][0] < predict_proba[0][1]:
-    return f'According to this comment, we recommend you to take this course with {round(predict_proba[0][1]*100)}% chance.'
+    if predict_proba[0][0] > predict_proba[0][1]:
+        return f'According to this comment, we do not recommend you to take this course with {round(predict_proba[0][0]*100)}% chance.'
+    elif predict_proba[0][0] < predict_proba[0][1]:
+        return f'According to this comment, we recommend you to take this course with {round(predict_proba[0][1]*100)}% chance.'
 
-def get_features(comment):
-  comment = re.sub(r'[^a-zA-Z\s]', '', comment).lower().split()
-  comment = [' '.join([word for word in comment if word not in (stop_words)])]
-  comment = list(map(lemmatize, comment))
-  comment = loaded_tfidfv.transform(comment)
+def important_words(comment):
+    comment = re.sub(r'[^a-zA-Z\s]', '', comment).lower().split()
+    comment = [' '.join([word for word in comment if word not in (stop_words)])]
+    comment = list(map(lemmatize, comment))[0]
+    pipeline = make_pipeline(loaded_tfidfv, loaded_model)
+    proba = pipeline.predict_proba([comment])
+    explainer = LimeTextExplainer(class_names = class_names)
+    explain = explainer.explain_instance(comment, pipeline.predict_proba)
+    html = explain.as_html()
+    return components.html(html, height=1000)
 
-  features = loaded_tfidfv.get_feature_names()
-
-  def sort_matrix(matrix):
-    importances = zip(matrix.col, matrix.data)
-    return sorted(importances, key=lambda x: (x[1], x[0]), reverse=True)
-  
-  sorted_features = sort_matrix(comment.tocoo())
-
-  def top_features(features, sorted_features, n):
-    sorted_features = sorted_features[:n]
-
-    scores = []
-    feature = []
-
-    for idx, score in sorted_features:
-      scores.append(round(score, 2))
-      feature.append(features[idx])
-    
-    return pd.Series(feature)
-  
-  important_words = top_features(features, sorted_features, 10)
-
-  return important_words
 
 def load_lottieurl(url: str):
     r = requests.get(url)
@@ -116,12 +104,7 @@ with st.form('form'):
         result = predict(comment)
         st.write(result)
 
+
 if submitted:
     st.write('Here are the crucial words that influenced the analysis result!')
-    importances = get_features(comment)
-    if 'we recommend' in result:
-      for word in importances:
-        st.success(word)
-    elif 'we do not recommend' in result:
-      for word in importances:
-        st.warning(word)
+    important_words(comment)
