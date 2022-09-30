@@ -5,6 +5,8 @@
 
 [Ratemyprofessor](https://ratemyprofessors.com) 내 수강평을 활용해 강좌 추천 여부를 분석해주는 웹 애플리케이션 제작 프로젝트
 
+[웹 애플리케이션](https://9haeng-course-review-sentiment-analysis-web-app---init---xwszi8.streamlitapp.com/) 을 직접 사용해보길 희망하신다면 링크를 클릭해주세요.
+
 ## 프로젝트 배경
 ----
 강좌를 수강한 학생들은 수강평을 통해 자신들의 경험을 타인에게 공유합니다.
