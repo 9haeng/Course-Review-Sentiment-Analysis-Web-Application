@@ -33,6 +33,7 @@
 ----
 ### 초기화면
 ![guide](https://user-images.githubusercontent.com/70729822/193257198-db4908d4-0c15-4398-8caa-01b22847329d.gif)
+
 간단한 서비스 가이드 메시지를 기재해 놓았습니다.
 
 ### 강좌 수강을 추천으로 분류할 경우
@@ -41,6 +42,7 @@
 
 ### 강좌 수강을 비추천으로 분류할 경우
 ![not recommended](https://user-images.githubusercontent.com/70729822/193257233-e5b9c76b-3f42-4bb2-8ca8-f365fdfad7ca.gif)
+
 사용자가 입력한 텍스트를 바탕으로 어떤 단어들이 예상 결과에 영향을 미쳤는지 시각화하여 제공합니다.
 
 
